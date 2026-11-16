@@ -38,6 +38,33 @@ jobs:
           unzip -o CandleProMobileV2_APK_Builder_Tanpa_Android_Studio.zip -d extracted
           ls -la extracted/CandleProMobileV2
 
+      - name: Fix Java and Kotlin JVM targets
+        run: |
+          cd extracted/CandleProMobileV2
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          candidates = [Path("app/build.gradle"), Path("app/build.gradle.kts")]
+          gradle_file = next((p for p in candidates if p.exists()), None)
+          if gradle_file is None:
+              raise SystemExit("Tidak menemukan app/build.gradle atau app/build.gradle.kts")
+
+          source = gradle_file.read_text(encoding="utf-8")
+          fixed = source.replace("JavaVersion.VERSION_1_8", "JavaVersion.VERSION_17")
+          fixed = fixed.replace("VERSION_1_8", "VERSION_17")
+
+          if fixed == source:
+              raise SystemExit("Deklarasi Java 1.8 tidak ditemukan. Kirim isi app/build.gradle agar dapat diperiksa.")
+          gradle_file.write_text(fixed, encoding="utf-8")
+          print(f"Target Java diperbarui ke 17 pada {gradle_file}")
+
+          print("--- Konfigurasi compileOptions ---")
+          for line in fixed.splitlines():
+              if "sourceCompatibility" in line or "targetCompatibility" in line or "jvmTarget" in line:
+                  print(line)
+          PY
+
       - name: Build APK
         run: |
           cd extracted/CandleProMobileV2
