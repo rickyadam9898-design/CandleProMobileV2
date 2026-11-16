@@ -4,7 +4,6 @@
           cd extracted/CandleProMobileV2
           python3 - <<'PY'
           from pathlib import Path
-          import re
 
           candidates = [
               Path("app/build.gradle"),
@@ -16,25 +15,33 @@
           )
 
           if gradle_file is None:
-              raise SystemExit("File app/build.gradle tidak ditemukan")
+              raise SystemExit("File Gradle tidak ditemukan")
 
           source = gradle_file.read_text(encoding="utf-8")
 
-          # Ganti target Java 1.8 jika ditemukan
-          fixed = source.replace(
+          # Perbaiki target Java
+          source = source.replace(
               "JavaVersion.VERSION_1_8",
               "JavaVersion.VERSION_17"
           )
-          fixed = fixed.replace(
+          source = source.replace(
               "VERSION_1_8",
               "VERSION_17"
           )
 
-          # Jangan hentikan build hanya karena Java 1.8 tidak ditemukan
-          gradle_file.write_text(fixed, encoding="utf-8")
+          # Perbaiki Kotlin JVM Target jika sudah tersedia
+          source = source.replace(
+              'jvmTarget = "1.8"',
+              'jvmTarget = "17"'
+          )
+          source = source.replace(
+              'jvmTarget = "1.8"',
+              'jvmTarget = "17"'
+          )
 
-          print("Konfigurasi Gradle berhasil diperiksa:")
-          print(gradle_file)
-          print(fixed)
+          gradle_file.write_text(source, encoding="utf-8")
 
+          print("Gradle file:", gradle_file)
+          print("Java/Kotlin target diperiksa.")
+          print(source)
           PY
